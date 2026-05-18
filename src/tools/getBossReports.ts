@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 获取工作汇报工具
  * Boss 助理查看各 AI 员工克隆体提交的工作汇报
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 
 export const getBossReportsTool = {
@@ -91,3 +91,4 @@ export const getBossReportsTool = {
     }
   }
 };
+

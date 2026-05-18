@@ -1,15 +1,15 @@
-/**
+﻿/**
  * 连接诊断工具
  * 帮助用户快速排查 API Key 和后端连接问题
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { CONFIG } from '../config/index.js';
 import { get } from '../client/apiClient.js';
 
 export const testConnectionTool = {
   name: 'test_connection',
-  description: 'Test the connection to the AI Plan Manager backend and verify the API Key. Use this tool when users report "Token无效", "连接失败" or similar errors to diagnose the issue.',
+  description: 'Test the connection to the GotoPlan backend and verify the API Key. Use this tool when users report "Token无效", "连接失败" or similar errors to diagnose the issue.',
   parameters: Type.Object({}),
 
   async execute(_id: string, _params: Record<string, never>) {
@@ -124,3 +124,4 @@ export const testConnectionTool = {
     };
   }
 };
+

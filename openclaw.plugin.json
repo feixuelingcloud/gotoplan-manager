@@ -1,7 +1,7 @@
 {
   "id": "@gotoplan/manager",
   "name": "GotoPlan Manager",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "GotoPlan OpenClaw 插件",
   "type": "module",
   "openclaw": {
@@ -19,6 +19,41 @@
         "type": "string",
         "default": "https://plan.lingcloudai.com/api",
         "description": "后端 API 地址。本地测试时填写 http://localhost:4000/api"
+      },
+      "feishuEnabled": {
+        "type": "boolean",
+        "default": false,
+        "description": "是否启用飞书文档同步"
+      },
+      "feishuAppId": {
+        "type": "string",
+        "default": "",
+        "description": "飞书应用 App ID"
+      },
+      "feishuAppSecret": {
+        "type": "string",
+        "default": "",
+        "description": "飞书应用 App Secret"
+      },
+      "feishuFolderToken": {
+        "type": "string",
+        "default": "",
+        "description": "飞书云空间目标文件夹 Token"
+      },
+      "notionEnabled": {
+        "type": "boolean",
+        "default": false,
+        "description": "是否启用 Notion 同步"
+      },
+      "notionApiKey": {
+        "type": "string",
+        "default": "",
+        "description": "Notion Integration Token"
+      },
+      "notionParentPageId": {
+        "type": "string",
+        "default": "",
+        "description": "Notion 目标父页面 ID"
       }
     }
   },
@@ -31,6 +66,29 @@
     "apiBase": {
       "label": "API 地址（可选）",
       "placeholder": "默认: https://plan.lingcloudai.com/api  本地测试: http://localhost:4000/api"
+    },
+    "feishuEnabled": {
+      "label": "启用飞书同步"
+    },
+    "feishuAppId": {
+      "label": "飞书 App ID"
+    },
+    "feishuAppSecret": {
+      "label": "飞书 App Secret",
+      "sensitive": true
+    },
+    "feishuFolderToken": {
+      "label": "飞书文件夹 Token"
+    },
+    "notionEnabled": {
+      "label": "启用 Notion 同步"
+    },
+    "notionApiKey": {
+      "label": "Notion API Key",
+      "sensitive": true
+    },
+    "notionParentPageId": {
+      "label": "Notion 父页面 ID"
     }
   }
 }

@@ -1,10 +1,11 @@
-/**
+﻿/**
  * 停用克隆体工具
  * 软删除指定的 AI 员工克隆体（状态改为 paused，不会物理删除）
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { del } from '../client/apiClient.js';
+import { reportAgentChanged } from '../client/telemetryClient.js';
 
 export const removeCloneTool = {
   name: 'remove_clone',
@@ -21,6 +22,8 @@ export const removeCloneTool = {
       const response = await del<{ cloneId: string; status: string }>(
         `/openclaw/cloned-agents/${encodeURIComponent(params.cloneId)}`
       );
+
+      reportAgentChanged('removed', response.cloneId);
 
       return {
         success: true,
@@ -44,3 +47,4 @@ export const removeCloneTool = {
     }
   }
 };
+

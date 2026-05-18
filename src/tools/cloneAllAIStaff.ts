@@ -1,15 +1,35 @@
-/**
+﻿/**
  * 批量克隆"我的AI员工"工具
  *
  * 流程：
  * 1. 读取用户"我的AI员工"列表
- * 2. 对每位员工：获取 SOUL → 本地创建 OpenClaw Agent → 回存绑定
- * 3. 返回完整的绑定映射表（sourceAgentId → cloneId）
+ * 2. 获取每位员工的 SOUL（纯读，无副作用）
+ * 3. 用可预测的 slug 预构造 bindings，先向后端注册（在热重载之前完成）
+ * 4. 再调用 createAgent（会触发 openclaw.json 热重载，但注册已完成）
+ *
+ * 关键设计：后端注册必须在所有 createAgent 之前执行。
+ * 原因：每次 openclaw agents add 都会修改 openclaw.json，触发插件热重载，
+ * 导致 CONFIG.apiKey 被重置为空，后续 API 调用会因 401 失败。
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get, post } from '../client/apiClient.js';
 import { createAgent } from '../utils/openclawCli.js';
+import { reportAgentChanged } from '../client/telemetryClient.js';
+
+/** 带重试的 post，防止偶发网络抖动 */
+async function postWithRetry<T = any>(path: string, body: any, maxRetries = 3): Promise<T> {
+  let lastErr: any;
+  for (let i = 1; i <= maxRetries; i++) {
+    try {
+      return await post<T>(path, body);
+    } catch (err) {
+      lastErr = err;
+      if (i < maxRetries) await new Promise(r => setTimeout(r, 800 * i));
+    }
+  }
+  throw lastErr;
+}
 
 export const cloneAllAIStaffTool = {
   name: 'clone_all_ai_staff',
@@ -18,12 +38,17 @@ export const cloneAllAIStaffTool = {
   parameters: Type.Object({
     confirm: Type.Optional(Type.Boolean({
       description: '确认执行批量克隆，设为 true 表示用户已确认'
+    })),
+    reCloneExisting: Type.Optional(Type.Boolean({
+      description: '是否强制重新克隆已有员工。true=全部重新克隆并刷新SOUL，false（默认）=只克隆新增员工'
     }))
   }),
 
   async execute(_id: string, params: any) {
+    const reCloneExisting: boolean = params?.reCloneExisting === true;
+
     try {
-      // 1. 获取"我的AI员工"列表
+      // ── Step 1：获取"我的AI员工"列表 ──────────────────────────────────
       const myStaffRes = await get<{ agents: any[]; total: number; message?: string }>(
         '/openclaw/ai-staff/my-staff'
       );
@@ -44,9 +69,9 @@ export const cloneAllAIStaffTool = {
         };
       }
 
-      // 2. 对每位员工：获取 SOUL → 本地创建 OpenClaw Agent
-      const bindings: Array<{ agentId: string; openclawAgentId: string }> = [];
-      const localFailed: Array<{ agentId: string; name: string; error: string }> = [];
+      // ── Step 2：获取所有员工的 SOUL（纯读，无副作用，不触发热重载）──────
+      const staffWithSouls: Array<{ agentId: string; name: string; soul: string; slug: string }> = [];
+      const soulFetchFailed: Array<{ agentId: string; name: string; error: string }> = [];
 
       for (const staff of myStaffRes.agents) {
         try {
@@ -54,29 +79,41 @@ export const cloneAllAIStaffTool = {
             `/openclaw/ai-staff/${staff.agentId}/soul`
           );
           const slug = `clone-${staff.agentId}`;
-          const openclawAgentId = await createAgent(soulRes.name, soulRes.soul, slug);
-          bindings.push({ agentId: staff.agentId, openclawAgentId });
+          staffWithSouls.push({
+            agentId: staff.agentId,
+            name: soulRes.name || staff.name,
+            soul: soulRes.soul,
+            slug
+          });
         } catch (err: any) {
-          localFailed.push({ agentId: staff.agentId, name: staff.name || staff.agentId, error: err.message });
+          soulFetchFailed.push({ agentId: staff.agentId, name: staff.name || staff.agentId, error: err.message });
         }
       }
 
-      if (bindings.length === 0) {
+      if (staffWithSouls.length === 0) {
         return {
           success: false,
           output: [
-            '❌ **所有员工克隆失败**',
+            '❌ **获取员工 SOUL 失败**',
             '',
-            ...localFailed.map(f => `  • ${f.name}: ${f.error}`),
+            ...soulFetchFailed.map(f => `  • ${f.name}: ${f.error}`),
             '',
-            '💡 请检查本地是否已安装并可正常运行 openclaw CLI'
+            '💡 请检查网络连接和 API Key 是否有效'
           ].join('\n')
         };
       }
 
-      // 3. 将绑定关系批量回存后端
+      // ── Step 3：预构造 bindings（slug 可预测，不依赖 createAgent 返回值）──
+      // createAgent 内部以 slug 为 fallback ID，故 openclawAgentId === slug 始终成立。
       const agentIds = myStaffRes.agents.map((a: any) => a.agentId);
-      const cloneRes = await post<{
+      const bindings = staffWithSouls.map(s => ({
+        agentId: s.agentId,
+        openclawAgentId: s.slug   // slug = 'clone-{agentId}'，与 createAgent 返回值一致
+      }));
+
+      // ── Step 4：先向后端注册绑定关系（在任何 createAgent 之前执行）────────
+      // 此时 CONFIG.apiKey 仍处于干净状态，热重载尚未发生。
+      const cloneRes = await postWithRetry<{
         total_agents: number;
         newly_cloned: number;
         already_existed: number;
@@ -87,7 +124,25 @@ export const cloneAllAIStaffTool = {
         binding_map: Record<string, string>;
       }>('/openclaw/ai-staff/clone-all', { agentIds, bindings });
 
-      // 4. 构建展示结果
+      // ── Step 5：本地创建 OpenClaw Agent（会触发热重载，但注册已完成）────
+      // 即使此后发生热重载导致后续代码被中断，数据库绑定关系已安全写入。
+      const localFailed: Array<{ agentId: string; name: string; error: string }> = [];
+
+      // reCloneExisting=false 时跳过已有克隆体，避免覆盖其 SOUL.md
+      const alreadyExistedIds = new Set(
+        (cloneRes.already_existed_list || []).map((c: any) => c.agentId)
+      );
+
+      for (const staff of staffWithSouls) {
+        if (!reCloneExisting && alreadyExistedIds.has(staff.agentId)) continue;
+        try {
+          await createAgent(staff.name, staff.soul, staff.slug);
+        } catch (err: any) {
+          localFailed.push({ agentId: staff.agentId, name: staff.name, error: err.message });
+        }
+      }
+
+      // ── Step 6：构建展示结果 ───────────────────────────────────────────
       const lines: string[] = [
         `✅ **"我的AI员工"克隆完成！**`,
         '',
@@ -127,6 +182,10 @@ export const cloneAllAIStaffTool = {
       lines.push('');
       lines.push('🎯 **所有克隆体已就位，任务将由 OpenClaw 本地模型执行！**');
 
+      if (cloneRes.newly_cloned > 0) {
+        reportAgentChanged('cloned', `batch:${cloneRes.newly_cloned}`);
+      }
+
       return {
         success: true,
         total: cloneRes.total_agents,
@@ -152,3 +211,4 @@ export const cloneAllAIStaffTool = {
     }
   }
 };
+

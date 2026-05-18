@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 更新任务状态工具
  * 修改单个任务的执行状态
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { patch } from '../client/apiClient.js';
 
 export const updateTaskStatusTool = {
@@ -147,3 +147,4 @@ export const updateTaskStatusTool = {
     }
   }
 };
+

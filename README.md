@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/feixuelingcloud/gotoplan-manager)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/feixuelingcloud/gotoplan-manager)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Plugin-orange.svg)](https://openclaw.ai)
 
@@ -41,16 +41,23 @@
 ### 🤖 AI 员工克隆与 Boss 多 Agent 编排
 - **AI 员工列表** - 查看当前账号下所有可用的 AI 员工
 - **一键克隆员工** - 将 AI 员工克隆为活跃的 Agent（支持单个或批量克隆）
+- **智能克隆检测** - 克隆前自动检测已有克隆体，弹窗提示选择"全部重新克隆"或"只克隆新增"，避免误操作
 - **克隆体管理** - 查看所有已激活的克隆 Agent，支持停用
 - **Boss 任务分派** - Boss 助理向指定 Agent 下发任务，Agent 自主执行
 - **任务状态追踪** - 实时查询已分派任务的执行进度
 - **工作汇报系统** - Agent 完成任务后自动提交工作报告，Boss 审阅确认
 - **Boss 晨间调度** - 每天早上一键将当日待办任务自动分派给各 Agent
 
-### 📝 计划成果同步（Notion / 飞书）
+### 💬 GotoBot 频道集成
+- **机器人指令执行** - 通过 `execute_bot_command` 向 GotoBot 频道发送机器人指令
+- **频道消息回复** - 通过 `send_gotobot_reply` 在 GotoBot 频道中发送回复消息
+- **实时沟通桥梁** - 实现 AI 员工与团队成员在 GotoBot 频道的实时交互
+
+### 📝 计划成果同步（Notion / 飞书 / 语雀）
 - **Notion 同步** - 确认报告后自动将成果写入 Notion 页面（Markdown 格式完整保留）
 - **飞书文档同步** - 确认报告后自动创建飞书 Docx 文档并写入成果
-- **灵活选择** - 每次确认报告时可选同步目标：`notion` / `feishu` / `both` / `none` / `auto`
+- **语雀同步** - 确认报告后自动将成果发布到语雀知识库文章
+- **灵活选择** - 每次确认报告时可选同步目标：`notion` / `feishu` / `yuque` / `both` / `none` / `auto`
 - **自动模式** - `auto` 模式下根据插件配置开关自动决定同步到哪个平台
 
 ### 🔌 AI 集成
@@ -188,6 +195,18 @@ OpenClaw 会自动帮你更新配置！
 
 > 获取方式：在 [飞书开放平台](https://open.feishu.cn/) 创建企业自建应用，开启「云文档」权限，获取 App ID 和 App Secret。
 
+### 语雀同步配置（可选）
+
+在 OpenClaw 插件配置中添加以下字段，即可在确认报告时自动同步成果到语雀知识库：
+
+| 配置项 | 说明 |
+|-------|------|
+| `yuqueEnabled` | 设为 `true` 启用语雀同步 |
+| `yuqueToken` | 语雀个人访问令牌（在语雀账号设置 → Token 中生成） |
+| `yuqueNamespace` | 目标知识库路径，格式：`用户名/知识库slug`，例如 `zhangsan/work-notes` |
+
+> 获取方式：登录 [语雀](https://www.yuque.com/)，进入账号设置 → Token，创建个人访问令牌。知识库路径可从知识库 URL 中获取。
+
 ---
 
 ## 📖 使用指南
@@ -301,6 +320,10 @@ AI 会帮你生成计划草稿，确认后会自动创建。
 ```
 
 ```
+确认报告，同步到语雀
+```
+
+```
 确认报告，同时同步到飞书和Notion
 ```
 
@@ -308,6 +331,16 @@ AI 会帮你生成计划草稿，确认后会自动创建。
 
 ```
 执行晨间调度，把今天的任务分派给各Agent
+```
+
+#### 15. GotoBot 频道操作 💬
+
+```
+向GotoBot频道发送指令：查询今日销售数据
+```
+
+```
+在GotoBot频道回复：已处理完毕，结果已更新到系统
 ```
 
 ### 高级功能
@@ -345,7 +378,7 @@ AI 会帮你生成计划草稿，确认后会自动创建。
 
 ## 🛠️ 可用工具
 
-插件提供以下 **20 个工具**：
+插件提供以下 **22 个工具**：
 
 #### 计划管理（10 个）
 
@@ -368,14 +401,21 @@ AI 会帮你生成计划草稿，确认后会自动创建。
 |---------|------|------|
 | `list_ai_staff` | 列出当前账号的 AI 员工 | 只读 |
 | `clone_staff_agent` | 克隆某个员工为活跃 Agent | 写入 |
-| `clone_all_ai_staff` | 批量克隆所有 AI 员工 | 写入 |
+| `clone_all_ai_staff` | 批量克隆所有 AI 员工（支持智能跳过已有克隆） | 写入 |
 | `list_cloned_agents` | 列出所有已激活的克隆 Agent | 只读 |
 | `remove_clone` | 停用某个克隆 Agent | 写入 |
 | `dispatch_task_to_agent` | Boss 向指定 Agent 分派任务 | 写入 |
 | `get_task_status` | 查询已分派任务的执行状态 | 只读 |
 | `get_boss_reports` | Boss 获取 Agent 提交的工作汇报 | 只读 |
-| `acknowledge_report` | Boss 确认报告（可选同步到 Notion/飞书） | 写入 |
+| `acknowledge_report` | Boss 确认报告（可选同步到 Notion/飞书/语雀） | 写入 |
 | `boss_morning_dispatch` | Boss 晨间自动调度：分派当日任务给各 Agent | 写入 |
+
+#### GotoBot 频道集成（2 个）🆕
+
+| 工具名称 | 描述 | 类型 |
+|---------|------|------|
+| `execute_bot_command` | 向 GotoBot 频道执行机器人指令 | 写入 |
+| `send_gotobot_reply` | 向 GotoBot 频道发送回复消息 | 写入 |
 
 ---
 
@@ -388,7 +428,7 @@ gotoplan-manager/
 │   │   └── apiClient.ts
 │   ├── config/              # 配置管理
 │   │   └── index.ts
-│   ├── tools/               # OpenClaw 工具（20 个）
+│   ├── tools/               # OpenClaw 工具（22 个）
 │   │   ├── createPlanDraft.ts
 │   │   ├── confirmPlan.ts
 │   │   ├── updatePlan.ts
@@ -408,13 +448,17 @@ gotoplan-manager/
 │   │   ├── getTaskStatus.ts
 │   │   ├── getBossReports.ts
 │   │   ├── acknowledgeReport.ts
-│   │   └── bossMorningDispatch.ts
+│   │   ├── bossMorningDispatch.ts
+│   │   ├── executeBotCommand.ts  # GotoBot 频道指令 🆕
+│   │   └── sendGotobotReply.ts   # GotoBot 频道回复 🆕
 │   └── utils/               # 工具函数
 │       ├── errors.ts
 │       ├── datetime.ts
 │       ├── openclawCli.ts
-│       ├── notionClient.ts  # Notion 同步
-│       └── feishuClient.ts  # 飞书 Docx 同步
+│       ├── notionClient.ts     # Notion 同步
+│       ├── feishuClient.ts     # 飞书 Docx 同步
+│       ├── yuqueClient.ts      # 语雀同步 🆕
+│       └── gotobotChannel.ts   # GotoBot 频道客户端 🆕
 ├── skills/                  # 技能文档
 │   ├── ai-plan-management/
 │   └── boss-orchestration/
@@ -461,6 +505,22 @@ DEBUG=true npm run dev
 ---
 
 ## 🆕 更新日志
+
+### v1.0.4 (2026-05-18)
+
+#### ✨ 新功能
+- ✅ **GotoBot 频道集成** - 新增 `execute_bot_command` 和 `send_gotobot_reply` 工具，支持向 GotoBot 频道发送指令和回复
+- ✅ **语雀同步** - 确认报告时可自动将成果发布到语雀知识库（需配置 `yuqueToken` 和 `yuqueNamespace`）
+- ✅ **智能克隆检测** - 一键克隆 AI 员工前自动检测已有克隆体，弹窗提示选择"全部重新克隆"或"只克隆新增"，`clone_all_ai_staff` 新增 `reCloneExisting` 参数
+- ✅ 工具总数从 20 个扩展到 **22 个**
+
+#### 🎨 体验优化
+- ✅ 克隆弹窗选择面板文字对比度优化，彻底解决黄色背景下文字发虚的视觉问题
+- ✅ 已有克隆体列表以员工名称展示，支持超出3位时显示省略提示
+- ✅ `acknowledge_report` 同步目标选项新增 `yuque` 支持
+
+#### 🔧 配置增强
+- ✅ `claw-hub.json` schema 新增 Yuque 相关配置字段（`yuqueEnabled`、`yuqueToken`、`yuqueNamespace`）
 
 ### v1.0.3 (2026-04-18)
 

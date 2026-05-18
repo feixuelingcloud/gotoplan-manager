@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 生成执行报告工具
  * 为指定计划生成执行情况报告
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { post } from '../client/apiClient.js';
 
 export const generateReportTool = {
@@ -149,3 +149,4 @@ export const generateReportTool = {
     }
   }
 };
+

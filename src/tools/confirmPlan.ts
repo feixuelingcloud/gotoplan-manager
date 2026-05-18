@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 确认计划创建工具
  * 第二步:确认草稿并正式保存到数据库
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { post } from '../client/apiClient.js';
 
 export const confirmPlanTool = {
@@ -88,3 +88,4 @@ export const confirmPlanTool = {
     }
   }
 };
+

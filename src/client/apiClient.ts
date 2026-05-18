@@ -61,7 +61,8 @@ async function request<T = any>(method: string, path: string, body: any = null):
             return;
           }
 
-          resolve(parsed.data as T);
+          const hasData = Object.prototype.hasOwnProperty.call(parsed, 'data');
+          resolve((hasData ? parsed.data : parsed) as T);
         } catch (parseError: any) {
           const preview = data.slice(0, 300).replace(/\n/g, ' ');
           reject(new Error(

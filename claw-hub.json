@@ -1,7 +1,7 @@
 {
   "name": "@gotoplan/manager",
   "displayName": "GotoPlan",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A powerful OpenClaw plugin for intelligent plan and task management with AI assistance",
   "author": {
     "name": "feixuelingcloud",
@@ -59,7 +59,7 @@
         "apiKey": {
           "type": "string",
           "title": "API Key",
-          "description": "Your AI Plan Manager API Key (get it from your account settings page)",
+          "description": "Your GotoPlan API Key (get it from your account settings page)",
           "required": true
         },
         "apiBase": {
@@ -111,6 +111,25 @@
           "type": "string",
           "title": "Feishu Folder Token (Optional)",
           "description": "If set, the created doc will be placed in this Feishu drive folder",
+          "required": false
+        },
+        "yuqueEnabled": {
+          "type": "boolean",
+          "title": "Enable Yuque Sync (Optional)",
+          "description": "Whether to sync completed results to Yuque (语雀) when acknowledging a report",
+          "required": false,
+          "default": false
+        },
+        "yuqueToken": {
+          "type": "string",
+          "title": "Yuque Personal Access Token (Optional)",
+          "description": "语雀个人访问令牌，在语雀账号设置 → Token 中生成",
+          "required": false
+        },
+        "yuqueNamespace": {
+          "type": "string",
+          "title": "Yuque Namespace (Optional)",
+          "description": "目标知识库路径，格式：用户名/知识库slug，例如 zhangsan/work-notes",
           "required": false
         }
       }
@@ -217,7 +236,15 @@
     },
     {
       "name": "clone_all_ai_staff",
-      "description": "Batch clone all AI staff members into active agents"
+      "description": "Batch clone all AI staff members into active agents (supports skipping existing clones)"
+    },
+    {
+      "name": "execute_bot_command",
+      "description": "Execute a bot command in GotoBot channel"
+    },
+    {
+      "name": "send_gotobot_reply",
+      "description": "Send a reply message in GotoBot channel"
     }
   ],
   "installation": {

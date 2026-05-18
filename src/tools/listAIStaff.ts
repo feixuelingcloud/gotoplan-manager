@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 列出 AI 员工工具
  * 获取系统中所有 AI 员工，可按部门或关键词过滤
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 
 export const listAIStaffTool = {
@@ -65,3 +65,4 @@ export const listAIStaffTool = {
     }
   }
 };
+

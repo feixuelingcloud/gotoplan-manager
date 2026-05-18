@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 获取计划详情工具
  * 查询指定计划的完整信息
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 
 export const getPlanDetailTool = {
@@ -179,3 +179,4 @@ export const getPlanDetailTool = {
     }
   }
 };
+

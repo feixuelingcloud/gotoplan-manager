@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 获取今日重点工具
  * 基于优先级和截止日期,推荐今日应关注的任务
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 import { getTodayBeijing, formatBeijingDate } from '../utils/datetime.js';
 
@@ -152,3 +152,4 @@ export const getTodayFocusTool = {
     }
   }
 };
+

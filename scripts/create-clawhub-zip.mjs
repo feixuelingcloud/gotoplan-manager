@@ -1,10 +1,14 @@
 import {
-  cpSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
+  readlinkSync,
   readFileSync,
   rmSync,
+  statSync,
+  symlinkSync,
 } from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -38,12 +42,34 @@ const optionalEntries = [
   "INSTALLATION.md",
   "LICENSE",
   "skills",
+  "install.sh",
+  "install.bat",
   "fix-config.bat",
   "fix-config.sh",
   "windows-install.ps1",
   "macOS安装指南.md",
   "macOS快速安装.md",
 ];
+
+function copyRecursive(sourcePath, targetPath) {
+  const stat = statSync(sourcePath);
+
+  if (stat.isDirectory()) {
+    mkdirSync(targetPath, { recursive: true });
+    for (const entry of readdirSync(sourcePath)) {
+      copyRecursive(path.join(sourcePath, entry), path.join(targetPath, entry));
+    }
+    return;
+  }
+
+  if (stat.isSymbolicLink()) {
+    symlinkSync(readlinkSync(sourcePath), targetPath);
+    return;
+  }
+
+  mkdirSync(path.dirname(targetPath), { recursive: true });
+  copyFileSync(sourcePath, targetPath);
+}
 
 for (const entry of requiredEntries) {
   const entryPath = path.join(projectRoot, entry);
@@ -58,13 +84,23 @@ const tempRootDir = path.join(projectRoot, ".release");
 mkdirSync(tempRootDir, { recursive: true });
 const stagingDir = mkdtempSync(path.join(tempRootDir, "clawhub-"));
 const packageRoot = path.join(stagingDir, "package-root");
-const outputFileName = `${zipSlug}-${packageJson.version}-clawhub.zip`;
-const outputFilePath = path.join(releaseDir, outputFileName);
+let outputFileName = `${zipSlug}-${packageJson.version}-clawhub.zip`;
+let outputFilePath = path.join(releaseDir, outputFileName);
 
 mkdirSync(packageRoot, { recursive: true });
 mkdirSync(releaseDir, { recursive: true });
-rmSync(outputFilePath, { force: true });
+try {
+  rmSync(outputFilePath, { force: true });
+} catch (error) {
+  // Windows may briefly lock a freshly created ZIP. Avoid failing the build by
+  // writing a timestamped archive instead.
+  const stamp = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  outputFileName = `${zipSlug}-${packageJson.version}-clawhub-${stamp}.zip`;
+  outputFilePath = path.join(releaseDir, outputFileName);
+  console.warn(`[WARN] Existing zip is locked, writing ${outputFileName} instead: ${error.message}`);
+}
 
+const packagedEntries = [];
 for (const entry of [...requiredEntries, ...optionalEntries]) {
   const sourcePath = path.join(projectRoot, entry);
   if (!existsSync(sourcePath)) {
@@ -72,37 +108,36 @@ for (const entry of [...requiredEntries, ...optionalEntries]) {
   }
 
   const targetPath = path.join(packageRoot, entry);
-  cpSync(sourcePath, targetPath, { recursive: true });
+  copyRecursive(sourcePath, targetPath);
+  packagedEntries.push(entry);
 }
 
 if (process.platform === "win32") {
+  // Do not use PowerShell Compress-Archive here. Some OpenClaw/Linux unzip
+  // paths treat Windows-style separators as literal filename characters,
+  // producing flat files like "dist index.js" instead of "dist/index.js".
+  // bsdtar writes ZIP entries with POSIX "/" separators.
+  //
+  // bsdtar on Windows misinterprets absolute drive-letter paths (e.g. "F:\...")
+  // as network addresses ("F:" → host). Use a relative output path instead.
   try {
-    execFileSync("tar.exe", ["-a", "-cf", outputFilePath, "."], {
+    const relOutputPath = path.relative(packageRoot, outputFilePath).replace(/\\/g, "/");
+    execFileSync("tar", ["-a", "-cf", relOutputPath, ...packagedEntries], {
       cwd: packageRoot,
       stdio: "inherit",
     });
-  } catch {
-    execFileSync(
-      "powershell.exe",
-      [
-        "-NoProfile",
-        "-Command",
-        `Compress-Archive -Path * -DestinationPath '${outputFilePath.replace(/'/g, "''")}' -Force`,
-      ],
-      {
-        cwd: packageRoot,
-        stdio: "inherit",
-      },
-    );
+  } catch (error) {
+    console.error("[ERROR] Failed to create ZIP with tar. Windows releases require tar.exe to preserve POSIX paths.");
+    throw error;
   }
 } else {
   try {
-    execFileSync("zip", ["-r", "-q", outputFilePath, "."], {
+    execFileSync("zip", ["-r", "-q", outputFilePath, ...packagedEntries], {
       cwd: packageRoot,
       stdio: "inherit",
     });
   } catch {
-    execFileSync("tar", ["-a", "-cf", outputFilePath, "."], {
+    execFileSync("tar", ["-a", "-cf", outputFilePath, ...packagedEntries], {
       cwd: packageRoot,
       stdio: "inherit",
     });

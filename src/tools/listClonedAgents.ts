@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 列出克隆体工具
  * 查看当前活跃的所有 AI 员工克隆体及其 cloneId
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 
 export const listClonedAgentsTool = {
@@ -70,3 +70,4 @@ export const listClonedAgentsTool = {
     }
   }
 };
+

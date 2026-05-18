@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 列出计划列表工具
  * 查询用户的所有计划并支持筛选
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 
 export const listPlansTool = {
@@ -170,3 +170,4 @@ export const listPlansTool = {
     }
   }
 };
+

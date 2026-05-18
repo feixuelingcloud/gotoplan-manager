@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 创建计划草稿工具
  * 第一步:生成计划预览,等待用户确认
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { post } from '../client/apiClient.js';
 
 export const createPlanDraftTool = {
@@ -86,3 +86,4 @@ export const createPlanDraftTool = {
     }
   }
 };
+

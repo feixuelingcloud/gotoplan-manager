@@ -1,9 +1,9 @@
-/**
+﻿/**
  * 查询任务状态工具
  * 轮询任务执行进度，获取完成状态和报告信息
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get } from '../client/apiClient.js';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -90,3 +90,4 @@ export const getTaskStatusTool = {
     }
   }
 };
+

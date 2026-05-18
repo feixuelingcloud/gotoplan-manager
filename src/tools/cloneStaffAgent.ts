@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 克隆 AI 员工工具
  *
  * 流程：
@@ -7,9 +7,10 @@
  * 3. 将 openclawAgentId 回存后端，建立 sourceAgentId ↔ cloneId 绑定
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get, post } from '../client/apiClient.js';
 import { createAgent } from '../utils/openclawCli.js';
+import { reportAgentChanged } from '../client/telemetryClient.js';
 
 export const cloneStaffAgentTool = {
   name: 'clone_staff_agent',
@@ -71,6 +72,8 @@ export const cloneStaffAgentTool = {
         `   示例: dispatch_task_to_agent(cloneId="${response.cloneId}", taskDescription="...")`
       ].join('\n');
 
+      reportAgentChanged('cloned', response.cloneId);
+
       return {
         success: true,
         cloneId: response.cloneId,
@@ -95,3 +98,4 @@ export const cloneStaffAgentTool = {
     }
   }
 };
+

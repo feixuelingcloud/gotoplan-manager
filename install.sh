@@ -17,39 +17,19 @@ if ! command -v openclaw &> /dev/null; then
 fi
 echo "✅ OpenClaw 已安装"
 
-# 检查环境变量文件
+# 检查构建产物。发布包已自带 dist；源码安装时才需要构建。
 echo ""
-echo "[2/5] 检查环境变量..."
-if [ ! -f .env ]; then
-    echo "⚠️  未找到 .env 文件"
-    echo "正在从 .env.example 复制..."
-    cp .env.example .env
-    echo ""
-    echo "⚠️  请编辑 .env 文件,填入您的配置:"
-    echo "   - AI_PLAN_API_BASE: 后端API地址"
-    echo "   - AI_PLAN_API_KEY: 您的Token"
-    echo ""
-    echo "使用默认编辑器打开 .env..."
-    ${EDITOR:-nano} .env
-    echo ""
+echo "[2/5] 检查插件构建产物..."
+if [ ! -f dist/index.js ]; then
+    echo "⚠️  未找到 dist/index.js，尝试从源码构建..."
+    npm install
+    npm run build
 fi
-echo "✅ 环境变量配置完成"
-
-# 安装依赖
-echo ""
-echo "[3/6] 安装依赖..."
-npm install
-echo "✅ 依赖安装完成"
-
-# 编译 TypeScript
-echo ""
-echo "[4/6] 编译 TypeScript..."
-npm run build
-echo "✅ 编译完成"
+echo "✅ 构建产物就绪"
 
 # 安装插件到 OpenClaw（手动写入正确配置，避免旧版 CLI 将 path 写入 plugins.entries 导致 Unrecognized key: "path" 错误）
 echo ""
-echo "[5/6] 安装插件到 OpenClaw..."
+echo "[3/5] 安装插件到 OpenClaw..."
 
 PLUGIN_ID="@gotoplan/manager"
 OPENCLAW_DIR="$HOME/.openclaw"
@@ -61,7 +41,7 @@ mkdir -p "$PLUGIN_INSTALL_DIR"
 cp -r dist "$PLUGIN_INSTALL_DIR/"
 cp openclaw.plugin.json "$PLUGIN_INSTALL_DIR/"
 cp package.json "$PLUGIN_INSTALL_DIR/"
-[ -d node_modules ] && cp -r node_modules "$PLUGIN_INSTALL_DIR/"
+cp claw-hub.json "$PLUGIN_INSTALL_DIR/" 2>/dev/null || true
 
 # 用 Node.js 将路径写入 plugins.load.paths（而非 plugins.entries），
 # 并确保 plugins.entries 下只有合法字段（enabled / config），
@@ -102,7 +82,7 @@ echo "✅ 插件安装完成"
 
 # 重启 Gateway
 echo ""
-echo "[6/6] 重启 OpenClaw Gateway..."
+echo "[4/5] 重启 OpenClaw Gateway..."
 if openclaw gateway restart; then
     echo "✅ Gateway 重启完成"
 else
@@ -112,7 +92,7 @@ fi
 # 验证安装
 echo ""
 echo "========================================"
-echo "  安装完成! 正在验证..."
+echo "  [5/5] 安装完成! 正在验证..."
 echo "========================================"
 echo ""
 

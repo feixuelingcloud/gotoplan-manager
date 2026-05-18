@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 修改计划工具
  * 用于修改计划的各种字段(截止日期、重要性、分类等)
  *
@@ -7,7 +7,7 @@
  * - status 字段是只读的展示字段，由后端根据 completed 自动计算，不可直接写入
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { patch } from '../client/apiClient.js';
 
 export const updatePlanTool = {
@@ -143,3 +143,4 @@ export const updatePlanTool = {
     }
   }
 };
+

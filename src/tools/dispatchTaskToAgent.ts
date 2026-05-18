@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 分派任务给 AI 员工克隆体工具
  *
  * 流程：
@@ -8,9 +8,10 @@
  * 4. 立即返回 taskId，用 get_task_status 轮询
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { post } from '../client/apiClient.js';
 import { sendMessage } from '../utils/openclawCli.js';
+import { reportTaskStarted, reportTaskCompleted } from '../client/telemetryClient.js';
 
 export const dispatchTaskToAgentTool = {
   name: 'dispatch_task_to_agent',
@@ -58,22 +59,31 @@ export const dispatchTaskToAgentTool = {
         ? `任务：${params.taskDescription}\n\n背景信息：${params.contextInfo}`
         : `任务：${params.taskDescription}`;
 
-      // 后台执行，结果回写后端
+      // 后台执行，状态实时回传后端
       Promise.resolve().then(async () => {
         try {
+          await reportTaskStarted(taskId, {
+            status: 'in_progress',
+            progress: 10,
+            message: 'AI员工已开始执行任务'
+          });
+
           const result = await sendMessage(openclawAgentId, fullMessage);
-          await post(`/openclaw/tasks/${taskId}/complete`, {
-            result,
+
+          await reportTaskCompleted(taskId, {
+            status: 'completed',
+            resultSummary: result.slice(0, 200),
+            resultContent: result,
             agentName,
             agentEmoji
           });
         } catch (err: any) {
-          await post(`/openclaw/tasks/${taskId}/complete`, {
+          await reportTaskCompleted(taskId, {
             failed: true,
             errorMessage: err.message,
             agentName,
             agentEmoji
-          }).catch(() => {});
+          });
         }
       });
 
@@ -115,3 +125,4 @@ export const dispatchTaskToAgentTool = {
     }
   }
 };
+

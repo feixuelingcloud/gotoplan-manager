@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Boss 晨间调度工具
  *
  * 流程：
@@ -8,7 +8,7 @@
  * 4. 立即返回分派摘要
  */
 
-import { Type } from '@sinclair/typebox';
+import { Type } from '../utils/schema.js';
 import { get, post } from '../client/apiClient.js';
 import { createAgent, sendMessage } from '../utils/openclawCli.js';
 
@@ -203,3 +203,4 @@ export const bossMorningDispatchTool = {
     }
   }
 };
+

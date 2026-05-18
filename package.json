@@ -1,6 +1,6 @@
 {
   "name": "@gotoplan/manager",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A powerful OpenClaw plugin for intelligent plan and task management with AI assistance",
   "type": "module",
   "main": "dist/index.js",
@@ -19,7 +19,8 @@
     "check": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "postinstall": "node ./scripts/ensure-dist.mjs",
-    "release:zip": "node ./scripts/create-clawhub-zip.mjs"
+    "release:zip": "node ./scripts/create-clawhub-zip.mjs",
+    "release:zip:win": "powershell -NoProfile -ExecutionPolicy Bypass -File ./do-zip.ps1"
   },
   "engines": {
     "node": ">=18"
@@ -32,9 +33,6 @@
     "url": "https://github.com/feixuelingcloud/gotoplan-manager/issues"
   },
   "homepage": "https://github.com/feixuelingcloud/gotoplan-manager#readme",
-  "dependencies": {
-    "@sinclair/typebox": "^0.34.28"
-  },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "tsx": "^4.19.2",
