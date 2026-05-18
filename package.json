@@ -1,5 +1,5 @@
 {
-  "name": "@gotoplan/manager",
+  "name": "gotoplan-manager",
   "version": "1.0.4",
   "description": "A powerful OpenClaw plugin for intelligent plan and task management with AI assistance",
   "type": "module",

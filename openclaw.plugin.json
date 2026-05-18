@@ -1,5 +1,5 @@
 {
-  "id": "@gotoplan/manager",
+  "id": "gotoplan-manager",
   "name": "GotoPlan Manager",
   "version": "1.0.4",
   "description": "GotoPlan OpenClaw 插件",
